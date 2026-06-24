@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
+import SmoothScroll from "@/components/SmoothScroll";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -38,7 +39,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-on-background font-body-md">
-        <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+        <SmoothScroll>
+          <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+        </SmoothScroll>
       </body>
     </html>
   );

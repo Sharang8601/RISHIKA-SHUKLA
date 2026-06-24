@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import gsap from "gsap";
 
 // Mock data reflecting the articles in the Stitch design
 const ALL_ARTICLES = [
@@ -76,16 +77,35 @@ export default function BlogsPage() {
     });
   }, [selectedCategory, searchQuery]);
 
+  useEffect(() => {
+    // Staggered entry for title and filter options on load
+    gsap.fromTo(
+      ".archive-header-anim",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", stagger: 0.12 }
+    );
+  }, []);
+
+  useEffect(() => {
+    // Whenever filters update, run a staggered reveal of the grid items
+    gsap.killTweensOf(".article-card-anim");
+    gsap.fromTo(
+      ".article-card-anim",
+      { opacity: 0, y: 35 },
+      { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", stagger: 0.1 }
+    );
+  }, [filteredArticles]);
+
   return (
     <main className="w-full px-margin-mobile md:px-gutter max-w-container-max mx-auto py-section-gap">
       {/* Header & Search/Filter Section */}
       <section className="mb-section-gap flex flex-col items-center text-center">
-        <h1 className="font-display-lg text-display-lg mb-stack-md">The Archive</h1>
-        <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-stack-lg">
+        <h1 className="archive-header-anim font-display-lg text-display-lg mb-stack-md">The Archive</h1>
+        <p className="archive-header-anim font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-stack-lg">
           Explore a curated collection of essays, tutorials, and insights on design, technology, and lifestyle.
         </p>
 
-        <div className="w-full max-w-3xl bg-surface-container-lowest p-stack-md rounded-xl border border-surface-container-high shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col md:flex-row gap-stack-md items-center">
+        <div className="archive-header-anim w-full max-w-3xl bg-surface-container-lowest p-stack-md rounded-xl border border-surface-container-high shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col md:flex-row gap-stack-md items-center">
           <div className="relative flex-grow w-full">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">
               search
@@ -115,7 +135,7 @@ export default function BlogsPage() {
           </div>
         </div>
 
-        <div className="w-full max-w-3xl flex justify-between items-center mt-stack-md px-2">
+        <div className="archive-header-anim w-full max-w-3xl flex justify-between items-center mt-stack-md px-2">
           <span className="font-label-md text-label-md text-on-surface-variant">
             Showing {filteredArticles.length} articles
           </span>
@@ -141,11 +161,11 @@ export default function BlogsPage() {
               return (
                 <article
                   key={article.id}
-                  className="md:col-span-8 group cursor-pointer border border-surface-container-high rounded-xl overflow-hidden bg-surface-container-lowest hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col text-left"
+                  className="article-card-anim md:col-span-8 group cursor-pointer border border-surface-container-high rounded-xl overflow-hidden bg-surface-container-lowest hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col text-left"
                 >
                   <Link href={`/blogs/${article.slug}`} className="block w-full h-80 overflow-hidden bg-surface-container-low relative">
                     <img
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out"
+                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 ease-in-out"
                       alt={article.title}
                       src={article.imgUrl}
                     />
@@ -183,7 +203,7 @@ export default function BlogsPage() {
               return (
                 <article
                   key={article.id}
-                  className="md:col-span-4 group cursor-pointer border border-surface-container-high rounded-xl overflow-hidden bg-primary-fixed-dim text-on-primary-fixed hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col text-left"
+                  className="article-card-anim md:col-span-4 group cursor-pointer border border-surface-container-high rounded-xl overflow-hidden bg-primary-fixed-dim text-on-primary-fixed hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col text-left"
                 >
                   <div className="p-stack-lg flex-grow flex flex-col justify-center h-full min-h-[300px]">
                     <div className="flex items-center gap-stack-sm mb-stack-sm">
@@ -206,11 +226,11 @@ export default function BlogsPage() {
             return (
               <article
                 key={article.id}
-                className="md:col-span-4 group cursor-pointer border border-surface-container-high rounded-xl overflow-hidden bg-surface-container-lowest hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col text-left"
+                className="article-card-anim md:col-span-4 group cursor-pointer border border-surface-container-high rounded-xl overflow-hidden bg-surface-container-lowest hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-300 flex flex-col text-left"
               >
                 <Link href={`/blogs/${article.slug}`} className="block w-full h-48 overflow-hidden bg-surface-container-low">
                   <img
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out"
+                    className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 ease-in-out"
                     alt={article.title}
                     src={article.imgUrl}
                   />

@@ -2,32 +2,96 @@
 
 import { useEffect, useRef } from "react";
 import ThreeAnimation from "@/components/ThreeAnimation";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function JourneyPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const reveals = document.querySelectorAll(".reveal");
+    // 1. Hero Title & Desc animations on page load
+    gsap.fromTo(
+      ".journey-hero-title",
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 1.2, ease: "power4.out", delay: 0.2 }
+    );
     
-    const revealOnScroll = () => {
-      const windowHeight = window.innerHeight;
-      const elementVisible = 150;
-      
-      reveals.forEach((reveal) => {
-        const elementTop = reveal.getBoundingClientRect().top;
-        if (elementTop < windowHeight - elementVisible) {
-          reveal.classList.add("active");
-        } else {
-          // Optional: remove class when scrolled out of view to re-trigger
-          reveal.classList.remove("active");
+    gsap.fromTo(
+      ".journey-hero-desc",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 1.2, ease: "power3.out", delay: 0.4 }
+    );
+
+    // 2. Grow the active vertical line on scroll
+    gsap.fromTo(
+      ".timeline-line-active",
+      { scaleY: 0 },
+      {
+        scaleY: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".timeline-section",
+          start: "top 30%",
+          end: "bottom 70%",
+          scrub: true,
+        }
+      }
+    );
+
+    // 3. Staggered reveal of each milestone row
+    const rows = gsap.utils.toArray<HTMLElement>(".milestone-row");
+    rows.forEach((row) => {
+      const dot = row.querySelector(".timeline-dot");
+      const content = row.querySelector(".milestone-content");
+      const img = row.querySelector(".milestone-img-wrapper");
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: row,
+          start: "top 80%",
+          toggleActions: "play none none reverse",
         }
       });
+
+      // Animate dot (color changes, scale up and glows)
+      tl.fromTo(
+        dot,
+        { scale: 0.8, backgroundColor: "var(--color-secondary-fixed-dim)", boxShadow: "0 0 0 rgba(183, 0, 82, 0)" },
+        { 
+          scale: 1.4, 
+          backgroundColor: "var(--color-primary)", 
+          boxShadow: "0 0 15px rgba(183, 0, 82, 0.6)", 
+          duration: 0.5, 
+          ease: "power2.out" 
+        }
+      );
+
+      // Determine text layout offset
+      const isFlexRow = row.classList.contains("md:flex-row");
+      const contentX = isFlexRow ? -40 : 40;
+
+      // Reveal text
+      tl.fromTo(
+        content,
+        { opacity: 0, x: contentX },
+        { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" },
+        "-=0.3"
+      );
+
+      // Reveal Image with curtain clip-path effect
+      tl.fromTo(
+        img,
+        { opacity: 0, y: 30, clipPath: "polygon(0 100%, 100% 100%, 100% 100%, 0 100%)" },
+        { opacity: 1, y: 0, clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)", duration: 1, ease: "power3.inOut" },
+        "-=0.6"
+      );
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
-
-    window.addEventListener("scroll", revealOnScroll);
-    revealOnScroll(); // Trigger immediately to reveal hero on load
-
-    return () => window.removeEventListener("scroll", revealOnScroll);
   }, []);
 
   return (
@@ -39,29 +103,33 @@ export default function JourneyPage() {
       <main className="flex-grow relative z-10 pt-32 pb-section-gap px-margin-mobile md:px-gutter max-w-container-max mx-auto w-full">
         
         {/* Hero Section */}
-        <section className="min-h-[50vh] flex flex-col justify-center items-center text-center mb-section-gap reveal">
-          <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-stack-md">
+        <section className="min-h-[50vh] flex flex-col justify-center items-center text-center mb-section-gap">
+          <h1 className="journey-hero-title font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-stack-md">
             The Journey
           </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+          <p className="journey-hero-desc font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
             A retrospective of spaces, stories, and the evolution of a digital aesthetic.
           </p>
         </section>
 
         {/* Timeline Section */}
-        <section className="relative w-full">
+        <section className="relative w-full timeline-section">
           {/* Central Line (Desktop) */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] timeline-line -translate-x-1/2"></div>
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[2px] bg-outline-variant/30 -translate-x-1/2">
+            <div className="timeline-line-active w-full h-full bg-primary origin-top scale-y-0"></div>
+          </div>
           {/* Left Line (Mobile) */}
-          <div className="md:hidden absolute left-4 top-0 bottom-0 w-[1px] timeline-line"></div>
+          <div className="md:hidden absolute left-4 top-0 bottom-0 w-[2px] bg-outline-variant/30">
+            <div className="timeline-line-active w-full h-full bg-primary origin-top scale-y-0"></div>
+          </div>
 
           {/* Milestone 2024 (Left Text / Right Image) */}
-          <div className="relative flex flex-col md:flex-row items-center justify-between mb-section-gap reveal group">
+          <div className="relative flex flex-col md:flex-row items-center justify-between mb-section-gap milestone-row group">
             {/* Dot */}
-            <div className="absolute left-4 md:left-1/2 w-3 h-3 bg-primary rounded-full -translate-x-[5px] md:-translate-x-1/2 mt-2 md:mt-0 z-10 ring-4 ring-background group-hover:scale-150 transition-transform duration-300"></div>
+            <div className="timeline-dot absolute left-4 md:left-1/2 w-3.5 h-3.5 bg-secondary-fixed-dim rounded-full -translate-x-[6px] md:-translate-x-1/2 mt-2 md:mt-0 z-10 ring-4 ring-background transition-all duration-300"></div>
             
             {/* Content Left */}
-            <div className="w-full md:w-[45%] pl-12 md:pl-0 md:pr-12 text-left md:text-right">
+            <div className="milestone-content w-full md:w-[45%] pl-12 md:pl-0 md:pr-12 text-left md:text-right">
               <h2 className="font-headline-md text-headline-md text-primary mb-stack-sm">2024</h2>
               <h3 className="font-label-md text-label-md text-on-surface mb-stack-md tracking-widest uppercase">The Digital Boutique</h3>
               <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
@@ -70,7 +138,7 @@ export default function JourneyPage() {
             </div>
             
             {/* Image Right */}
-            <div className="w-full md:w-[45%] pl-12 md:pl-0 mt-stack-lg md:mt-0">
+            <div className="milestone-img-wrapper w-full md:w-[45%] pl-12 md:pl-0 mt-stack-lg md:mt-0">
               <div className="aspect-[4/5] bg-surface-container-high rounded border border-outline-variant/30 overflow-hidden relative">
                 <img 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
@@ -82,12 +150,12 @@ export default function JourneyPage() {
           </div>
 
           {/* Milestone 2023 (Right Text / Left Image) */}
-          <div className="relative flex flex-col md:flex-row-reverse items-center justify-between mb-section-gap reveal group">
+          <div className="relative flex flex-col md:flex-row-reverse items-center justify-between mb-section-gap milestone-row group">
             {/* Dot */}
-            <div className="absolute left-4 md:left-1/2 w-3 h-3 bg-secondary-fixed-dim rounded-full -translate-x-[5px] md:-translate-x-1/2 mt-2 md:mt-0 z-10 ring-4 ring-background group-hover:bg-primary group-hover:scale-150 transition-all duration-300"></div>
+            <div className="timeline-dot absolute left-4 md:left-1/2 w-3.5 h-3.5 bg-secondary-fixed-dim rounded-full -translate-x-[6px] md:-translate-x-1/2 mt-2 md:mt-0 z-10 ring-4 ring-background transition-all duration-300"></div>
             
             {/* Content Right */}
-            <div className="w-full md:w-[45%] pl-12 md:pl-12 text-left">
+            <div className="milestone-content w-full md:w-[45%] pl-12 md:pl-12 text-left">
               <h2 className="font-headline-md text-headline-md text-primary mb-stack-sm">2023</h2>
               <h3 className="font-label-md text-label-md text-on-surface mb-stack-md tracking-widest uppercase">Architectural Musings</h3>
               <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
@@ -96,7 +164,7 @@ export default function JourneyPage() {
             </div>
             
             {/* Image Left */}
-            <div className="w-full md:w-[45%] pl-12 md:pl-0 mt-stack-lg md:mt-0">
+            <div className="milestone-img-wrapper w-full md:w-[45%] pl-12 md:pl-0 mt-stack-lg md:mt-0">
               <div className="aspect-[4/3] bg-surface-container-high rounded border border-outline-variant/30 overflow-hidden relative">
                 <img 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
@@ -108,12 +176,12 @@ export default function JourneyPage() {
           </div>
 
           {/* Milestone 2022 (Left Text / Right Image) */}
-          <div className="relative flex flex-col md:flex-row items-center justify-between mb-section-gap reveal group">
+          <div className="relative flex flex-col md:flex-row items-center justify-between mb-section-gap milestone-row group">
             {/* Dot */}
-            <div className="absolute left-4 md:left-1/2 w-3 h-3 bg-secondary-fixed-dim rounded-full -translate-x-[5px] md:-translate-x-1/2 mt-2 md:mt-0 z-10 ring-4 ring-background group-hover:bg-primary group-hover:scale-150 transition-all duration-300"></div>
+            <div className="timeline-dot absolute left-4 md:left-1/2 w-3.5 h-3.5 bg-secondary-fixed-dim rounded-full -translate-x-[6px] md:-translate-x-1/2 mt-2 md:mt-0 z-10 ring-4 ring-background transition-all duration-300"></div>
             
             {/* Content Left */}
-            <div className="w-full md:w-[45%] pl-12 md:pl-0 md:pr-12 text-left md:text-right">
+            <div className="milestone-content w-full md:w-[45%] pl-12 md:pl-0 md:pr-12 text-left md:text-right">
               <h2 className="font-headline-md text-headline-md text-primary mb-stack-sm">2022</h2>
               <h3 className="font-label-md text-label-md text-on-surface mb-stack-md tracking-widest uppercase">The First Chapter</h3>
               <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
@@ -122,7 +190,7 @@ export default function JourneyPage() {
             </div>
             
             {/* Image Right */}
-            <div className="w-full md:w-[45%] pl-12 md:pl-0 mt-stack-lg md:mt-0">
+            <div className="milestone-img-wrapper w-full md:w-[45%] pl-12 md:pl-0 mt-stack-lg md:mt-0">
               <div className="aspect-square bg-surface-container-high rounded border border-outline-variant/30 overflow-hidden relative">
                 <img 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out filter grayscale" 
